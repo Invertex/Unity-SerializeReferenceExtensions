@@ -66,13 +66,14 @@ namespace MackySoft.SerializeReferenceExtensions.Editor {
 		/// <param name="label"></param>
 		/// <returns></returns>
 		private bool TryDrawCustomUI(Rect position, SerializedProperty property, GUIContent label)
-        	{
+		{
+#if UNITY_2022_1_OR_NEWER
 			var scriptAttrUtility = typeof(PropertyDrawer).Assembly.GetType("UnityEditor.ScriptAttributeUtility");
 			//Returns the actual CustomPropertyDrawer that might exist for the actual reference, instead of the SubclassSelectorDrawer context we're in.
 			var getDrawerType = scriptAttrUtility.GetMethod("GetDrawerTypeForPropertyAndType", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
 			var customDrawerType = (Type)getDrawerType.Invoke(null, new object[] { property, property.managedReferenceValue.GetType() });
 			//Doesn't have a CustomPropertyDrawer
-			if(customDrawerType == null) { return false; }
+			if (customDrawerType == null) { return false; }
 			//Get the Property Drawer instance manager for this type
 			var getPropertyHandler = scriptAttrUtility.GetMethod("GetHandler", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
 			var propertyHandler = getPropertyHandler.Invoke(null, new object[] { property });
@@ -84,8 +85,8 @@ namespace MackySoft.SerializeReferenceExtensions.Editor {
 			var nestingLevel = (int)propertyHandler.GetType().GetField("m_NestingLevel", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(propertyHandler);
 
 			//If our drawerCount is the same as our nesting level, it means we haven't created an instance of our CustomPropertyDrawer yet as there are less Drawers than NestingLevels.
-			if(drawerCount > 0 && drawerCount == nestingLevel)
-            		{
+			if (drawerCount > 0 && drawerCount == nestingLevel)
+			{
 				//Get the FieldInfo of the field that holds the SerializedReference of this.
 				var parentType = property.serializedObject.targetObject.GetType();
 				var targetField = parentType.GetField(property.propertyPath, BindingFlags.Instance | BindingFlags.Public | BindingFlags.Public);
@@ -102,7 +103,10 @@ namespace MackySoft.SerializeReferenceExtensions.Editor {
 			customDrawer.OnGUI(position, property, label);
 
 			return true;
-        	}
+#else
+			return false
+#endif
+		}
 
 		TypePopupCache GetTypePopup (SerializedProperty property) {
 			// Cache this string. This property internally call Assembly.GetName, which result in a large allocation.
